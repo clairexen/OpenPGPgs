@@ -1,0 +1,110 @@
+--- OpenPGP-v5.1.0.js	2022-02-15 10:54:32.595823759 +0100
++++ OpenPGP-v5.1.0.gs	2022-02-15 10:53:03.650858886 +0100
+@@ -1,4 +1,4 @@
+-/*! OpenPGP.js v5.1.0 - 2022-01-24 - this is LGPL licensed code, see LICENSE/our website https://openpgpjs.org/ for more information. */
++/*! OpenPGP.js v5.1.0 - 2022-02-15 - this is LGPL licensed code, see LICENSE/our website https://openpgpjs.org/ for more information. */
+ var openpgp = (function (exports) {
+   'use strict';
+ 
+@@ -1688,12 +1688,21 @@
+      * @returns {Uint8Array|ReadableStream} A valid squence of utf8 bytes.
+      */
+     encodeUTF8: function (str) {
+-      const encoder = new TextEncoder('utf-8');
+-      // eslint-disable-next-line no-inner-declarations
+-      function process(value, lastChunk = false) {
+-        return encoder.encode(value, { stream: !lastChunk });
++      // [OpenPGP.gs] There's no TextEncoder class in Google Apps Script
++      if (typeof TextEncoder === 'undefined') {
++        // eslint-disable-next-line no-inner-declarations
++        function process(value, lastChunk = false) {
++          return util.stringToUint8Array(value); // FIXME
++        }
++        return transform(str, process, () => process('', true));
++      } else {
++        const encoder = new TextEncoder('utf-8');
++        // eslint-disable-next-line no-inner-declarations
++        function process(value, lastChunk = false) {
++          return encoder.encode(value, { stream: !lastChunk });
++        }
++        return transform(str, process, () => process('', true));
+       }
+-      return transform(str, process, () => process('', true));
+     },
+ 
+     /**
+@@ -1702,12 +1711,21 @@
+      * @returns {String|ReadableStream} A native javascript string.
+      */
+     decodeUTF8: function (utf8) {
+-      const decoder = new TextDecoder('utf-8');
+-      // eslint-disable-next-line no-inner-declarations
+-      function process(value, lastChunk = false) {
+-        return decoder.decode(value, { stream: !lastChunk });
++      // [OpenPGP.gs] There's no TextDecoder class in Google Apps Script
++      if (typeof TextDecoder === 'undefined') {
++        // eslint-disable-next-line no-inner-declarations
++        function process(value, lastChunk = false) {
++          return util.uint8ArrayToString(value); // FIXME
++        }
++        return transform(utf8, process, () => process(new Uint8Array(), true));
++      } else {
++        const decoder = new TextDecoder('utf-8');
++        // eslint-disable-next-line no-inner-declarations
++        function process(value, lastChunk = false) {
++          return decoder.decode(value, { stream: !lastChunk });
++        }
++        return transform(utf8, process, () => process(new Uint8Array(), true));
+       }
+-      return transform(utf8, process, () => process(new Uint8Array(), true));
+     },
+ 
+     /**
+@@ -2124,8 +2142,35 @@
+       return new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
+     };
+   } else {
+-    encodeChunk = buf => btoa(util.uint8ArrayToString(buf));
+-    decodeChunk = str => util.stringToUint8Array(atob(str));
++    // [OpenPGP.gs] There's no btoa() or atob() in Google Apps Script
++    if (typeof btoa === 'undefined') {
++      encodeChunk = function(input) {
++        const base64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
++        input = util.uint8ArrayToString(input);
++        for (var output = "", i = 0; i < input.length; i += 3) {
++          const inBytes = input.slice(i, i+3);
++          output += inBytes.length < 0 ? "=" : base64chars.charAt(inBytes.charCodeAt(0) >> 2);
++          output += inBytes.length < 1 ? "=" : base64chars.charAt(((inBytes.charCodeAt(0) & 3) << 4) | (inBytes.charCodeAt(1) >> 4));
++          output += inBytes.length < 2 ? "=" : base64chars.charAt(((inBytes.charCodeAt(1) & 15) << 2) | (inBytes.charCodeAt(2) >> 6));
++          output += inBytes.length < 3 ? "=" : base64chars.charAt(inBytes.charCodeAt(2) & 63);
++        }
++        return output;
++      };
++      decodeChunk = function(input) {
++        const base64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
++        input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
++        for (var output = "", i = 0; i < input.length; i += 4) {
++          const inBytes = input.slice(i ,i+4);
++          if (inBytes[1] != '=') output += String.fromCharCode((base64chars.indexOf(inBytes[0]) << 2) | (base64chars.indexOf(inBytes[1]) >> 4));
++          if (inBytes[2] != '=') output += String.fromCharCode(((base64chars.indexOf(inBytes[1]) & 15) << 4) | (base64chars.indexOf(inBytes[2]) >> 2));
++          if (inBytes[3] != '=') output += String.fromCharCode(((base64chars.indexOf(inBytes[2]) & 3) << 6) | base64chars.indexOf(inBytes[3]));
++        }
++        return util.stringToUint8Array(output);
++      };
++    } else {
++      encodeChunk = buf => btoa(util.uint8ArrayToString(buf));
++      decodeChunk = str => util.stringToUint8Array(atob(str));
++    }
+   }
+ 
+   /**
+@@ -9745,7 +9790,8 @@
+   } else { // Use JS fallbacks
+     hashFunctions = {
+       md5: md5,
+-      sha1: asmcryptoHash(Sha1, (!navigator.userAgent || navigator.userAgent.indexOf('Edge') === -1) && 'SHA-1'),
++      // [OpenPGP.gs] There's no 'navigator' object in Google Apps Script
++      sha1: asmcryptoHash(Sha1, (typeof navigator === 'undefined' || !navigator.userAgent || navigator.userAgent.indexOf('Edge') === -1) && 'SHA-1'),
+       sha224: hashjsHash(_224),
+       sha256: asmcryptoHash(Sha256, 'SHA-256'),
+       sha384: hashjsHash(_384, 'SHA-384'),

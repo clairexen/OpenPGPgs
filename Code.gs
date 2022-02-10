@@ -1,0 +1,85 @@
+const privateKeyArmored = `-----BEGIN PGP PRIVATE KEY BLOCK-----
+Version: cc
+
+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
+=KJiY
+-----END PGP PRIVATE KEY BLOCK-----`;
+
+async function main() {
+  const cleartextMsg = await openpgp.createCleartextMessage({
+    text: 'Hello, World!'
+  });
+  console.log(cleartextMsg);
+
+  const privateKey = await openpgp.readPrivateKey({
+    armoredKey: privateKeyArmored
+  });
+  let privateKeyStripped = { ...privateKey };
+  privateKeyStripped.keyPacket = { ...privateKeyStripped.keyPacket };
+  privateKeyStripped.keyPacket.fingerprint = "...";
+  privateKeyStripped.keyPacket.keyMaterial = "...";
+  privateKeyStripped.keyPacket.keyID = "...";
+  console.log(privateKeyStripped);
+
+  const signedMessage = await openpgp.sign({
+    message: cleartextMsg,
+    signingKeys: privateKey
+  });
+  console.log(signedMessage);
+}
