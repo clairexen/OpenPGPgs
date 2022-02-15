@@ -208,12 +208,21 @@ const util = {
    * @returns {Uint8Array|ReadableStream} A valid squence of utf8 bytes.
    */
   encodeUTF8: function (str) {
-    const encoder = new TextEncoder('utf-8');
-    // eslint-disable-next-line no-inner-declarations
-    function process(value, lastChunk = false) {
-      return encoder.encode(value, { stream: !lastChunk });
+    // [OpenPGP.gs] There's no TextEncoder class in Google Apps Script
+    if (typeof TextEncoder === 'undefined') {
+      // eslint-disable-next-line no-inner-declarations
+      function process(value, lastChunk = false) {
+        return util.stringToUint8Array(value); // FIXME
+      }
+      return stream.transform(str, process, () => process('', true));
+    } else {
+      const encoder = new TextEncoder('utf-8');
+      // eslint-disable-next-line no-inner-declarations
+      function process(value, lastChunk = false) {
+        return encoder.encode(value, { stream: !lastChunk });
+      }
+      return stream.transform(str, process, () => process('', true));
     }
-    return stream.transform(str, process, () => process('', true));
   },
 
   /**
@@ -222,12 +231,21 @@ const util = {
    * @returns {String|ReadableStream} A native javascript string.
    */
   decodeUTF8: function (utf8) {
-    const decoder = new TextDecoder('utf-8');
-    // eslint-disable-next-line no-inner-declarations
-    function process(value, lastChunk = false) {
-      return decoder.decode(value, { stream: !lastChunk });
+    // [OpenPGP.gs] There's no TextDecoder class in Google Apps Script
+    if (typeof TextDecoder === 'undefined') {
+      // eslint-disable-next-line no-inner-declarations
+      function process(value, lastChunk = false) {
+        return util.uint8ArrayToString(value); // FIXME
+      }
+      return stream.transform(utf8, process, () => process(new Uint8Array(), true));
+    } else {
+      const decoder = new TextDecoder('utf-8');
+      // eslint-disable-next-line no-inner-declarations
+      function process(value, lastChunk = false) {
+        return decoder.decode(value, { stream: !lastChunk });
+      }
+      return stream.transform(utf8, process, () => process(new Uint8Array(), true));
     }
-    return stream.transform(utf8, process, () => process(new Uint8Array(), true));
   },
 
   /**
