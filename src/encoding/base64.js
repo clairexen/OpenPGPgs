@@ -30,8 +30,35 @@ if (Buffer) {
     return new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
   };
 } else {
-  encodeChunk = buf => btoa(util.uint8ArrayToString(buf));
-  decodeChunk = str => util.stringToUint8Array(atob(str));
+  // [OpenPGP.gs] There's no btoa() or atob() in Google Apps Script
+  if (typeof btoa === 'undefined') {
+    encodeChunk = function(input) {
+      const base64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+      input = util.uint8ArrayToString(input);
+      for (var output = "", i = 0; i < input.length; i += 3) {
+        const inBytes = input.slice(i, i+3);
+        output += inBytes.length < 0 ? "=" : base64chars.charAt(inBytes.charCodeAt(0) >> 2);
+        output += inBytes.length < 1 ? "=" : base64chars.charAt(((inBytes.charCodeAt(0) & 3) << 4) | (inBytes.charCodeAt(1) >> 4));
+        output += inBytes.length < 2 ? "=" : base64chars.charAt(((inBytes.charCodeAt(1) & 15) << 2) | (inBytes.charCodeAt(2) >> 6));
+        output += inBytes.length < 3 ? "=" : base64chars.charAt(inBytes.charCodeAt(2) & 63);
+      }
+      return output;
+    };
+    decodeChunk = function(input) {
+      const base64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+      input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+      for (var output = "", i = 0; i < input.length; i += 4) {
+        const inBytes = input.slice(i ,i+4);
+        if (inBytes[1] != '=') output += String.fromCharCode((base64chars.indexOf(inBytes[0]) << 2) | (base64chars.indexOf(inBytes[1]) >> 4));
+        if (inBytes[2] != '=') output += String.fromCharCode(((base64chars.indexOf(inBytes[1]) & 15) << 4) | (base64chars.indexOf(inBytes[2]) >> 2));
+        if (inBytes[3] != '=') output += String.fromCharCode(((base64chars.indexOf(inBytes[2]) & 3) << 6) | base64chars.indexOf(inBytes[3]));
+      }
+      return util.stringToUint8Array(output);
+    };
+  } else {
+    encodeChunk = buf => btoa(util.uint8ArrayToString(buf));
+    decodeChunk = str => util.stringToUint8Array(atob(str));
+  }
 }
 
 /**
