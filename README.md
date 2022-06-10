@@ -12,3 +12,24 @@ a message.
 
 The [openpgpgs branch](https://github.com/clairexen/OpenPGPgs/tree/openpgpgs) contains the
 changes relative to the OpenPGP v5.1.0 release tag.
+
+
+Re-generating output files
+--------------------------
+
+```
+mkdir output
+
+git checkout openpgpgs
+npm install
+cp dist/openpgp.js output/OpenPGP-v5.1.0.gs
+cp dist/openpgp.min.js output/OpenPGP-v5.1.0.min.gs
+
+git checkout openpgpjs-v5.1.0
+npm install
+cp dist/openpgp.js output/OpenPGP-v5.1.0.js
+
+git checkout main
+cp output/OpenPGP-v5.1.0.{gs,min.gs,js} .
+diff -u OpenPGP-v5.1.0.js OpenPGP-v5.1.0.gs > OpenPGP.js2gs.diff
+```
