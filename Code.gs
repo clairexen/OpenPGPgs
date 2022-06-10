@@ -68,18 +68,14 @@ async function main() {
   console.log(cleartextMsg);
 
   const privateKey = await openpgp.readPrivateKey({
-    armoredKey: privateKeyArmored
+    armoredKey: privateKeyArmored,
+    config: { minRSABits: 2046 }
   });
-  let privateKeyStripped = { ...privateKey };
-  privateKeyStripped.keyPacket = { ...privateKeyStripped.keyPacket };
-  privateKeyStripped.keyPacket.fingerprint = "...";
-  privateKeyStripped.keyPacket.keyMaterial = "...";
-  privateKeyStripped.keyPacket.keyID = "...";
-  console.log(privateKeyStripped);
 
   const signedMessage = await openpgp.sign({
     message: cleartextMsg,
     signingKeys: privateKey
   });
+
   console.log(signedMessage);
 }
