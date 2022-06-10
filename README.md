@@ -18,18 +18,19 @@ Re-generating output files
 --------------------------
 
 ```
+V=v5.1.0
 mkdir output
 
-git checkout openpgpgs
+git checkout openpgpgs-$V
 npm install
-cp dist/openpgp.js output/OpenPGP-v5.1.0.gs
-cp dist/openpgp.min.js output/OpenPGP-v5.1.0.min.gs
+cp dist/openpgp.js output/OpenPGP-$V.gs
+cp dist/openpgp.min.js output/OpenPGP-$V.min.gs
 
-git checkout openpgpjs-v5.1.0
+git checkout openpgpjs-$V
 npm install
-cp dist/openpgp.js output/OpenPGP-v5.1.0.js
+cp dist/openpgp.js output/OpenPGP-$V.js
 
 git checkout main
-cp output/OpenPGP-v5.1.0.{gs,min.gs,js} .
-diff -u OpenPGP-v5.1.0.js OpenPGP-v5.1.0.gs > OpenPGP.js2gs.diff
+cp output/OpenPGP-$V.{gs,min.gs,js} .
+diff -u OpenPGP-$V.{js,gs} > OpenPGP-$V.js2gs.diff
 ```
